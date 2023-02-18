@@ -6,16 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.google.gson.Gson
-import com.route.news_app_c37.api.ApiConstants
-import com.route.news_app_c37.api.ApiManager
+import androidx.lifecycle.ViewModelProvider
 import com.route.news_app_c37.api.model.newsResponse.News
-import com.route.news_app_c37.api.model.newsResponse.NewsResponse
 import com.route.news_app_c37.api.model.sourcesResponse.Source
 import com.route.news_app_c37.databinding.FragmentNewsBinding
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class NewsFragment : Fragment() {
 
@@ -31,6 +25,12 @@ class NewsFragment : Fragment() {
 
 
     lateinit var viewBinding: FragmentNewsBinding
+    lateinit var vieWModel: NewsViewModel
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        vieWModel = ViewModelProvider(this).get(NewsViewModel::class.java)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -46,40 +46,27 @@ class NewsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initRecyclerView()
-        getNews();
+        vieWModel.getNews(source.id ?: "");
+        subscribeToLiveData()
+    }
+
+    fun subscribeToLiveData() {
+        vieWModel.newsList.observe(viewLifecycleOwner) {
+            bindNewsList(it)
+        }
+        vieWModel.showError.observe(viewLifecycleOwner) {
+            showErrorLayout(it)
+        }
+        vieWModel.showLoading.observe(viewLifecycleOwner) {
+            if (it) showLoadingLayout()
+            else hideLoading()
+        }
     }
 
     val newsAdapter = NewsAdapter(null)
     private fun initRecyclerView() {
         viewBinding.newsRecycler.adapter = newsAdapter
 
-    }
-
-    private fun getNews() {
-        showLoadingLayout()
-        ApiManager
-            .getApis()
-            .getNews(ApiConstants.apiKey, source.id ?: "")
-            .enqueue(object : Callback<NewsResponse> {
-                override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
-                    showErrorLayout(t.localizedMessage)
-                }
-
-                override fun onResponse(
-                    call: Call<NewsResponse>,
-                    response: Response<NewsResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        // we have news to show
-                        bindNewsList(response.body()?.articles)
-                        return
-                    }
-                    val errorResponse = Gson().fromJson(
-                        response.errorBody()?.string(), NewsResponse::class.java
-                    )
-                    showErrorLayout(errorResponse.message)
-                }
-            })
     }
 
     private fun bindNewsList(articles: List<News?>?) {
@@ -92,6 +79,10 @@ class NewsFragment : Fragment() {
     private fun showLoadingLayout() {
         viewBinding.loadingIndicator.isVisible = true
         viewBinding.errorLayout.isVisible = false
+    }
+
+    private fun hideLoading() {
+        viewBinding.loadingIndicator.isVisible = false
     }
 
     private fun showErrorLayout(message: String?) {

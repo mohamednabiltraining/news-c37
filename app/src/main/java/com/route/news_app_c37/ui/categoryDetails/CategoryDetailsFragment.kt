@@ -7,22 +7,18 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.tabs.TabLayout
-import com.google.gson.Gson
 import com.route.news_app_c37.R
-import com.route.news_app_c37.api.ApiConstants
-import com.route.news_app_c37.api.ApiManager
 import com.route.news_app_c37.api.model.sourcesResponse.Source
-import com.route.news_app_c37.api.model.sourcesResponse.SourcesResponse
 import com.route.news_app_c37.databinding.FragmentDetailsCategoryBinding
 import com.route.news_app_c37.ui.categories.Category
 import com.route.news_app_c37.ui.news.NewsFragment
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class CategoryDetailsFragment : Fragment() {
     lateinit var viewBinding: FragmentDetailsCategoryBinding
+    lateinit var viewModel: CategoryDetailsViewModel
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -34,9 +30,30 @@ class CategoryDetailsFragment : Fragment() {
         return viewBinding.root
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this).get(CategoryDetailsViewModel::class.java)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        loadNewsSources();
+        viewModel.loadNewsSources(category.id)
+        subscribeToLiveData()
+    }
+
+    fun subscribeToLiveData() {
+        viewModel.sourcesLivedata.observe(viewLifecycleOwner) {
+            bindSourcesInTabLayout(it)
+        }
+        viewModel.showLoadingLayout.observe(viewLifecycleOwner) { show ->
+            if (show)
+                showLoadingLayout()
+            else hideLoading();
+        }
+
+        viewModel.showErrorLayout.observe(viewLifecycleOwner) {
+            showErrorLayout(it)
+        }
     }
 
     fun changeNewsFragment(source: Source) {
@@ -47,41 +64,13 @@ class CategoryDetailsFragment : Fragment() {
 
     }
 
-    private fun loadNewsSources() {
-        showLoadingLayout()
-        ApiManager
-            .getApis()
-            .getSources(ApiConstants.apiKey, category.id)
-            .enqueue(object : Callback<SourcesResponse> {
-                override fun onResponse(
-                    call: Call<SourcesResponse>,
-                    response: Response<SourcesResponse>
-                ) {
-                    viewBinding.loadingIndicator.isVisible = false
-
-                    if (response.isSuccessful) {
-                        bindSourcesInTabLayout(response.body()?.sources)
-                    } else {
-                        val gson = Gson()
-                        val errorResponse =
-                            gson.fromJson(
-                                response.errorBody()?.string(),
-                                SourcesResponse::class.java
-                            );
-                        showErrorLayout(errorResponse.message);
-                    }
-                }
-
-                override fun onFailure(call: Call<SourcesResponse>, t: Throwable) {
-                    viewBinding.loadingIndicator.isVisible = false
-                    showErrorLayout(t.localizedMessage);
-                }
-            })
-    }
-
     private fun showLoadingLayout() {
         viewBinding.loadingIndicator.isVisible = true
         viewBinding.errorLayout.isVisible = false
+    }
+
+    private fun hideLoading() {
+        viewBinding.loadingIndicator.isVisible = false
     }
 
     private fun showErrorLayout(message: String?) {
@@ -123,9 +112,7 @@ class CategoryDetailsFragment : Fragment() {
             })
         viewBinding.tabLayout.getTabAt(0)?.select()
     }
-
     lateinit var category: Category
-
     companion object {
         fun getInstance(category: Category): CategoryDetailsFragment {
             val fragment = CategoryDetailsFragment()
