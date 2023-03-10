@@ -27,7 +27,7 @@ fun changeCardBackgroundColor(cardView: CardView, colorId: Int) {
     )
 }
 
-@BindingAdapter("android:imageId")
+@BindingAdapter("imageId")
 fun changeImageWithByResourceId(
     imageView: ImageView,
     resId: Int
