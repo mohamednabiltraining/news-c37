@@ -4,10 +4,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.route.news_app_c37.api.ApiConstants
 import com.route.news_app_c37.api.ApiManager
 import com.route.news_app_c37.api.model.sourcesResponse.Source
 import com.route.news_app_c37.api.model.sourcesResponse.SourcesResponse
+import com.route.news_app_c37.repositories.source.SourcesRemoteDataSourceImpl
+import com.route.news_app_c37.repositories.source.SourcesRepositoryImpl
+import com.route.news_app_c37.repositoriesContract.source.SourcesRepository
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -15,16 +17,18 @@ class CategoryDetailsViewModel : ViewModel() {
     val sourcesLivedata = MutableLiveData<List<Source?>?>()
     val showLoadingLayout = MutableLiveData<Boolean>()
     val showErrorLayout = MutableLiveData<String>()
+    val webServices = ApiManager.getApis();
+    val sourcesDataSource = SourcesRemoteDataSourceImpl(webServices)
+    val sourcesRepository: SourcesRepository =
+        SourcesRepositoryImpl(sourcesDataSource)
 
     fun loadNewsSources(categoryId: String) {
         viewModelScope.launch {
             showLoadingLayout.value = true
             try {
-                val serverData = ApiManager
-                    .getApis()
-                    .getSources(ApiConstants.apiKey, categoryId)
+                val sources = sourcesRepository.getSourcesByCategoryId(categoryId)
                 showLoadingLayout.value = false
-                sourcesLivedata.value = serverData.sources
+                sourcesLivedata.value = sources
             } catch (t: HttpException) {
                 val errorResponse: SourcesResponse =
                     Gson().fromJson(
