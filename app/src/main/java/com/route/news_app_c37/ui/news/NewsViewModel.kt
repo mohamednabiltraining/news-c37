@@ -4,22 +4,19 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.route.news_app_c37.api.ApiManager
 import com.route.news_app_c37.api.model.newsResponse.News
 import com.route.news_app_c37.api.model.newsResponse.NewsResponse
-import com.route.news_app_c37.repositories.news.NewsRemoteDataSourceImpl
-import com.route.news_app_c37.repositories.news.NewsRepositoryImpl
 import com.route.news_app_c37.repositoriesContract.news.NewsRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import javax.inject.Inject
 
-class NewsViewModel : ViewModel() {
+@HiltViewModel
+class NewsViewModel @Inject constructor(val newsRepo: NewsRepository) : ViewModel() {
     val showLoading = MutableLiveData<Boolean>()
     val showError = MutableLiveData<String>()
     val newsList = MutableLiveData<List<News?>?>()
-    val webServices = ApiManager.getApis()
-    val newsRemoteDataSource = NewsRemoteDataSourceImpl(webServices)
-    val newsRepo: NewsRepository = NewsRepositoryImpl(newsRemoteDataSource)
     fun getNews(sourceId: String) {
         showLoading.value = true
         viewModelScope.launch {

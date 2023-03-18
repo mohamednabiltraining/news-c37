@@ -10,10 +10,12 @@ import com.route.news_app_c37.ui.categories.CategoriesFragment
 import com.route.news_app_c37.ui.categories.Category
 import com.route.news_app_c37.ui.categoryDetails.CategoryDetailsFragment
 import com.route.news_app_c37.ui.settings.SettingsFragment
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(),
     CategoriesFragment.OnCategoryClickListener {
+
     override fun onCategoryClick(category: Category) {
         showCategoryDetailsFragment(category)
     }

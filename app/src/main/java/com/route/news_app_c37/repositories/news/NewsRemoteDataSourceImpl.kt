@@ -4,8 +4,10 @@ import com.route.news_app_c37.api.ApiConstants
 import com.route.news_app_c37.api.WebServices
 import com.route.news_app_c37.api.model.newsResponse.News
 import com.route.news_app_c37.repositoriesContract.news.NewsRemoteDataSource
+import javax.inject.Inject
 
-class NewsRemoteDataSourceImpl(val webServices: WebServices) : NewsRemoteDataSource {
+class NewsRemoteDataSourceImpl @Inject constructor(val webServices: WebServices) :
+    NewsRemoteDataSource {
 
     override suspend fun getNewsBySourceId(sourceId: String): List<News?>? {
         val response = webServices.getNews(ApiConstants.apiKey, sourceId)

@@ -6,11 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import com.route.news_app_c37.api.model.newsResponse.News
 import com.route.news_app_c37.api.model.sourcesResponse.Source
 import com.route.news_app_c37.databinding.FragmentNewsBinding
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class NewsFragment : Fragment() {
 
     companion object {
@@ -25,11 +28,7 @@ class NewsFragment : Fragment() {
 
 
     lateinit var viewBinding: FragmentNewsBinding
-    lateinit var vieWModel: NewsViewModel
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        vieWModel = ViewModelProvider(this).get(NewsViewModel::class.java)
-    }
+    val vieWModel: NewsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,7 +62,9 @@ class NewsFragment : Fragment() {
         }
     }
 
-    val newsAdapter = NewsAdapter(null)
+    @Inject
+    lateinit var newsAdapter: NewsAdapter
+
     private fun initRecyclerView() {
         viewBinding.newsRecycler.adapter = newsAdapter
 
